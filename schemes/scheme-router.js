@@ -1,6 +1,8 @@
 const express = require('express');
 
 const Schemes = require('./scheme-model.js');
+const db = require('./db.config');
+const { schema } = require('./db.config');
 
 const router = express.Router();
 
@@ -35,7 +37,7 @@ router.get('/:id/steps', (req, res) => {
 
   Schemes.findSteps(id)
   .then(steps => {
-    if (steps.length) {
+    if (steps) {
       res.json(steps);
     } else {
       res.status(404).json({ message: 'Could not find steps for given scheme' })
@@ -48,7 +50,6 @@ router.get('/:id/steps', (req, res) => {
 
 router.post('/', (req, res) => {
   const schemeData = req.body;
-
   Schemes.add(schemeData)
   .then(scheme => {
     res.status(201).json(scheme);
@@ -61,9 +62,11 @@ router.post('/', (req, res) => {
 router.post('/:id/steps', (req, res) => {
   const stepData = req.body;
   const { id } = req.params; 
-
+  stepData.scheme_Id = Number(id);
+  
   Schemes.findById(id)
   .then(scheme => {
+    console.log(scheme)
     if (scheme) {
       Schemes.addStep(stepData, id)
       .then(step => {
@@ -90,7 +93,7 @@ router.put('/:id', (req, res) => {
         res.json(updatedScheme);
       });
     } else {
-      res.status(404).json({ message: 'Could not find scheme with given id' });
+      res.status(404).json({ message: scheme });
     }
   })
   .catch (err => {
@@ -99,12 +102,12 @@ router.put('/:id', (req, res) => {
 });
 
 router.delete('/:id', (req, res) => {
-  const { id } = req.params;
-
+const id = req.params.id;
+const body = req.body
   Schemes.remove(id)
   .then(deleted => {
     if (deleted) {
-      res.json({ removed: deleted });
+      res.status(200).json({ removed: id, body});
     } else {
       res.status(404).json({ message: 'Could not find scheme with given id' });
     }
